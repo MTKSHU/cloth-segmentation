@@ -29,7 +29,7 @@ from data.custom_dataset_data_loader import CustomDatasetDataLoader, sample_data
 
 from options.base_options import parser
 from utils.tensorboard_utils import board_add_images
-from utils.saving_utils import save_checkpoints
+from utils.saving_utils import save_checkpoints, save_checkpoint
 from utils.saving_utils import load_checkpoint, load_checkpoint_mgpu
 from utils.distributed import get_world_size, set_seed, synchronize, cleanup
 
@@ -61,7 +61,7 @@ def training_loop(opt):
         device = torch.device("cuda:0")
         local_rank = 0
 
-    u_net = U2NET(in_ch=3, out_ch=4)
+    u_net = U2NET(in_ch=3, out_ch=2)    # bg, cloths
     if opt.continue_train:
         u_net = load_checkpoint(u_net, opt.unet_checkpoint)
     u_net = u_net.to(device)
@@ -97,7 +97,8 @@ def training_loop(opt):
         print("Entering training loop!")
 
     # loss function
-    weights = np.array([1, 1.5, 1.5, 1.5], dtype=np.float32)
+    # weights = np.array([1, 1.5, 1.5, 1.5], dtype=np.float32)
+    weights = np.array([1, 1.5], dtype=np.float32)
     weights = torch.from_numpy(weights).to(device)
     loss_CE = nn.CrossEntropyLoss(weight=weights).to(device)
 
@@ -114,7 +115,6 @@ def training_loop(opt):
         label = Variable(label.to(device))
 
         d0, d1, d2, d3, d4, d5, d6 = u_net(image)
-
         loss0 = loss_CE(d0, label)
         loss1 = loss_CE(d1, label)
         loss2 = loss_CE(d2, label)
@@ -154,11 +154,14 @@ def training_loop(opt):
 
             if itr % opt.save_freq == 0:
                 save_checkpoints(opt, itr, u_net)
+                save_checkpoint(u_net, os.path.join(opt.save_dir, "latest.pth"))
 
     print("Training done!")
     if local_rank == 0:
         itr += 1
         save_checkpoints(opt, itr, u_net)
+        save_checkpoint(u_net, os.path.join(opt.save_dir, "latest.pth"))
+
 
 
 if __name__ == "__main__":

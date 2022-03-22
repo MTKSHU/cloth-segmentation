@@ -5,8 +5,8 @@ import os
 class parser(object):
     def __init__(self):
         self.name = "training_cloth_segm_u2net_exp1"  # Expriment name
-        self.image_folder = "../imaterialist/train/"  # image folder path
-        self.df_path = "../imaterialist/train.csv"  # label csv path
+        self.image_folder = "/workspace/data/imaterialist/train/"  # image folder path
+        self.df_path = "/workspace/data/imaterialist/train.csv"  # label csv path
         self.distributed = False  # True for multi gpu training
         self.isTrain = True
 
@@ -17,14 +17,14 @@ class parser(object):
         self.mean = 0.5
         self.std = 0.5
 
-        self.batchSize = 2  # 12
-        self.nThreads = 2  # 3
+        self.batchSize = 1  # 12
+        self.nThreads = 6  # 3
         self.max_dataset_size = float("inf")
 
         self.serial_batches = False
         self.continue_train = True
         if self.continue_train:
-            self.unet_checkpoint = "prev_checkpoints/cloth_segm_unet_surgery.pth"
+            self.unet_checkpoint = "results/training_cloth_segm_u2net_exp1/checkpoints/itr_00053000_u2net.pth"
 
         self.save_freq = 1000
         self.print_freq = 10

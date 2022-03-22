@@ -114,28 +114,37 @@ class AlignedDataset(BaseDataset):
         masks = torch.as_tensor(nmx, dtype=torch.uint8)
 
         final_label = np.zeros((self.width, self.height), dtype=np.uint8)
-        first_channel = np.zeros((self.width, self.height), dtype=np.uint8)
-        second_channel = np.zeros((self.width, self.height), dtype=np.uint8)
-        third_channel = np.zeros((self.width, self.height), dtype=np.uint8)
+        # first_channel = np.zeros((self.width, self.height), dtype=np.uint8)
+        # second_channel = np.zeros((self.width, self.height), dtype=np.uint8)
+        # third_channel = np.zeros((self.width, self.height), dtype=np.uint8)
+        cloth_channel = np.zeros((self.width, self.height), dtype=np.uint8)
 
         upperbody = [0, 1, 2, 3, 4, 5]
         lowerbody = [6, 7, 8]
         wholebody = [9, 10, 11, 12]
 
+        cloth = list(range(46))
+
         for i in range(len(labels)):
-            if labels[i] in upperbody:
-                first_channel += new_masks[i]
-            elif labels[i] in lowerbody:
-                second_channel += new_masks[i]
-            elif labels[i] in wholebody:
-                third_channel += new_masks[i]
+            # if labels[i] in upperbody:
+            #     first_channel += new_masks[i]
+            # elif labels[i] in lowerbody:
+            #     second_channel += new_masks[i]
+            # elif labels[i] in wholebody:
+            #     third_channel += new_masks[i]
+            if labels[i] in cloth:
+                cloth_channel += new_masks[i]
 
-        first_channel = (first_channel > 0).astype("uint8")
-        second_channel = (second_channel > 0).astype("uint8")
-        third_channel = (third_channel > 0).astype("uint8")
 
-        final_label = first_channel + second_channel * 2 + third_channel * 3
-        conflict_mask = (final_label <= 3).astype("uint8")
+        # first_channel = (first_channel > 0).astype("uint8")
+        # second_channel = (second_channel > 0).astype("uint8")
+        # third_channel = (third_channel > 0).astype("uint8")
+        cloth_channel = (cloth_channel > 0).astype("uint8")
+
+        # final_label = first_channel + second_channel * 2 + third_channel * 3
+        final_label = cloth_channel
+
+        conflict_mask = (final_label <= 1).astype("uint8")
         final_label = (conflict_mask) * final_label + (1 - conflict_mask) * 1
         target_tensor = torch.as_tensor(final_label, dtype=torch.int64)
 
@@ -153,7 +162,7 @@ class AlignedDataset(BaseDataset):
         shape: (height,width) of array to return
         Returns numpy array according to the shape, 1 - mask, 0 - background
         """
-        shape = (shape[1], shape[0])
+        shape = (int(shape[1]), int(shape[0]))
         s = mask_rle.split()
         # gets starts & lengths 1d arrays
         starts, lengths = [np.asarray(x, dtype=int) for x in (s[0::2], s[1::2])]
